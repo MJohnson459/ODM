@@ -102,7 +102,7 @@ docker run -ti --rm -v c:/Users/youruser/datasets:/datasets --gpus all opendrone
 
 When you run ODM, if the GPU is recognized, in the first few lines of output you should see:
 
-```bash
+```
 [INFO]    Writing exif overrides
 [INFO]    Maximum photo dimensions: 4000px
 [INFO]    Found GPU device: Intel(R) OpenCL HD Graphics
@@ -119,7 +119,7 @@ docker run --rm --gpus all nvidia/cuda:10.0-base nvidia-smi
 
 If you see an output that looks like this:
 
-```bash
+```
 Fri Jul 24 18:51:55 2020
 +-----------------------------------------------------------------------------+
 | NVIDIA-SMI 440.82       Driver Version: 440.82       CUDA Version: 10.2     |
@@ -142,103 +142,51 @@ Help improve our software! We welcome contributions from everyone, whether to ad
 
 ### Installation and first run
 
-For most users, the easiest way to modify the software is to use the [devcontainer](https://containers.dev/). Most IDE's natively support this format and will prompt to open the devcontainer whenever you open the repository.
+#### Dependencies
 
-> **Note:** If your IDE doesn't support devcontainers, they can also be [run using a CLI](https://github.com/devcontainers/cli).
->
-> ```bash
-> devcontainer up
-> # And to connect
-> devcontainer exec /bin/bash
-> ```
+Install [pixi](https://pixi.sh), (or use the [devcontainer](https://containers.dev/)):
 
-Once started either through your IDE or the CLI, you can run this command within the container to build and install ODM:
+**MSVC and the Windows SDK come from a host install** of Visual Studio 2022 or Build Tools ([conda-forge Windows native notes](https://conda-forge.org/docs/how-to/advanced/windows/notes-on-native-code/)):
 
-```bash
-./configure.sh install
-```
+- Desktop development with C++
+- Windows 10/11 SDK
 
-The devcontainer mounts your home directory into the containers home directory and so you can use any datasets you have by setting the project path normally:
+#### Build and test
 
 ```bash
-# e.g.
-./run.sh --project-path ~/datasets mydataset
+pixi install --locked
+pixi run build
+pixi run test
+pixi run smoke
 ```
 
-You can now make changes to the ODM source and rebuild to test out any changes.
+#### Process a dataset
+
+Process a dataset (from the repo root, with a pixi shell or `pixi run`):
+
+```bash
+pixi run odm -- --project-path ~/datasets mydataset
+# or, after: eval "$(pixi shell-hook)"
+./run.py --project-path ~/datasets mydataset
+```
+
+GPU builds use the `gpu` environment: `pixi install -e gpu && pixi run -e gpu build`.
 
 ## Advanced
 
-### Native Install (Ubuntu 24.04)
+### Build Docker images from source
 
-You can run ODM natively on Ubuntu 24.04 (although we don't recommend it):
-
-```bash
-git clone https://github.com/OpenDroneMap/ODM
-cd ODM
-bash configure.sh install
-```
-
-You can then process datasets with `./run.sh /datasets/odm_data_aukerman`
-
-### Native Install (MacOS)
-
-> **Warning:** Installation on Mac is currently unmaintained, and may not work out-of-the-box. See this [issue](https://community.opendronemap.org/t/odm-install-on-a-mac-os-14-6-1/25007/3).
-
-You can run ODM natively on Intel/ARM MacOS.
-
-First install:
-
-- Xcode 13 (not 14, there's currently a bug)
-- [Homebrew](https://docs.brew.sh/Installation)
-
-Then Run:
+CPU image (matches CI):
 
 ```bash
-git clone https://github.com/OpenDroneMap/ODM
-cd ODM
-bash configure_macos.sh install
+docker build -t my_odm_image --target runtime .
 ```
 
-You can then process datasets with `./run.sh /datasets/odm_data_aukerman`
-
-This could be improved in the future. [Helps us create a Homebrew formula](https://github.com/OpenDroneMap/ODM/issues/1531).
-
-### Updating a native installation
-
-When updating to a newer version of native ODM, it is recommended that you run:
+GPU image:
 
 ```bash
-bash configure.sh reinstall
+docker build -f gpu.Dockerfile -t my_odm_image:gpu --target runtime .
 ```
-
-to ensure all the dependent packages and modules get updated.
-
-### Build Docker Images From Source
-
-If you want to rebuild your own docker image (if you have changed the source code, for example), from the ODM folder you can type:
-
-```bash
-docker build -t my_odm_image --no-cache .
-```
-
-When building your own Docker image, if image size is of importance to you, you should use the `--squash` flag, like so:
-
-```bash
-docker build --squash -t my_odm_image .
-```
-
-This will clean up intermediate steps in the Docker build process, resulting in a significantly smaller image (about half the size).
-
-Experimental flags need to be enabled in Docker to use the `--squash` flag. To enable this, insert the following into the file `/etc/docker/daemon.json`:
-
-```json
-{
-  "experimental": true
-}
-```
-
-After this, you must restart docker.
 
 If you have questions, join the developer's chat at https://community.opendronemap.org/c/developers-chat/21
 
@@ -248,7 +196,7 @@ If you have questions, join the developer's chat at https://community.opendronem
 
 ## Credits
 
-ODM makes use of [several libraries](https://github.com/OpenDroneMap/ODM/blob/master/snap/snapcraft.yaml#L36) and other awesome open source projects to perform its tasks. Among them we'd like to highlight:
+ODM makes use of [several libraries](https://github.com/OpenDroneMap/ODM/blob/master/pixi.toml) and other awesome open source projects to perform its tasks. Among them we'd like to highlight:
 
 - [OpenSfM](https://github.com/mapillary/OpenSfM)
 - [OpenMVS](https://github.com/cdcseacave/openMVS/)

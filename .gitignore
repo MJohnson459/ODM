@@ -27,11 +27,11 @@ __pycache__
 *.snap
 storage/
 
-
-vcpkg/
-venv/
-python312/
+scripts/pixi-shell-hook
 dist/
-innosetup/
 azuresigning/
 .DS_Store
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml
